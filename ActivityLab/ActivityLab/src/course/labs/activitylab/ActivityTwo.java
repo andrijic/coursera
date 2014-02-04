@@ -78,7 +78,7 @@ public class ActivityTwo extends Activity {
 			// TODO:
 			// Restore value of counters from saved state
 			// Only need 4 lines of code, one for every count variable
-			Log.i("COURSERA2","Restoring savedInstanceState");
+			//Log.i("Lab-Activity1","Restoring savedInstanceState");
 			mStart = savedInstanceState.getLong(START_KEY);
 			mCreate = savedInstanceState.getLong(CREATE_KEY);
 			mResume = savedInstanceState.getLong(RESUME_KEY);
@@ -88,7 +88,7 @@ public class ActivityTwo extends Activity {
 		}
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA2","Entered the onCreate method");
+		Log.i("Lab-Activity","Entered the onCreate method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -104,7 +104,7 @@ public class ActivityTwo extends Activity {
 		super.onStart();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA2","Entered the onStart method");
+		Log.i("Lab-Activity","Entered the onStart method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -118,7 +118,7 @@ public class ActivityTwo extends Activity {
 		super.onResume();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA2","Entered the onResume method");
+		Log.i("Lab-Activity","Entered the onResume method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -136,7 +136,7 @@ public class ActivityTwo extends Activity {
 
 		// TODO: Emit LogCat message
 
-		Log.i("COURSERA2","Entered the onPause method");
+		Log.i("Lab-Activity","Entered the onPause method");
 
 	}
 
@@ -146,7 +146,7 @@ public class ActivityTwo extends Activity {
 
 		// TODO: Emit LogCat message
 
-		Log.i("COURSERA2","Entered the onStop method");
+		Log.i("Lab-Activity","Entered the onStop method");
 
 	}
 
@@ -155,7 +155,7 @@ public class ActivityTwo extends Activity {
 		super.onRestart();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA2","Entered the onRestart method");
+		Log.i("Lab-Activity","Entered the onRestart method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -171,7 +171,7 @@ public class ActivityTwo extends Activity {
 		super.onDestroy();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA2","Entered the onDestroy method");
+		Log.i("Lab-Activity","Entered the onDestroy method");
 	}
 
 	@Override
@@ -181,7 +181,7 @@ public class ActivityTwo extends Activity {
 		// Save counter state information with a collection of key-value pairs
 		// 4 lines of code, one for every count variable
 		super.onSaveInstanceState(savedInstanceState);
-		Log.i("COURSERA","Entered the onSaveInstanceState method");
+		//Log.i("COURSERA1","Entered the onSaveInstanceState method");
 
 		savedInstanceState.putLong(START_KEY, mStart);
 		savedInstanceState.putLong(CREATE_KEY, mCreate);

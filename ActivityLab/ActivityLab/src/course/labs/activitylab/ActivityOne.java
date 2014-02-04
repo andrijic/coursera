@@ -17,7 +17,7 @@ public class ActivityOne extends Activity {
 	private static final String CREATE_KEY = "create";
 
 	// String for LogCat documentation
-	private final static String TAG = "Lab-ActivityOne";
+	private final static String TAG = "One";
 	
 	// Lifecycle counters
 	private long mCreate = 0;
@@ -79,7 +79,7 @@ public class ActivityOne extends Activity {
 			// TODO:
 			// Restore value of counters from saved state
 			// Only need 4 lines of code, one for every count variable
-			Log.i("COURSERA","Restoring savedInstanceState");
+			//Log.i("Lab-Activity1","Restoring savedInstanceState");
 			mStart = savedInstanceState.getLong(START_KEY);
 			mCreate = savedInstanceState.getLong(CREATE_KEY);
 			mResume = savedInstanceState.getLong(RESUME_KEY);
@@ -89,7 +89,7 @@ public class ActivityOne extends Activity {
 
 		
 		// TODO: Emit LogCat message
-				Log.i("COURSERA","Entered the onCreate method");
+				Log.i("Lab-Activity","Entered the onCreate method");
 
 				// TODO:
 				// Update the appropriate count variable
@@ -105,7 +105,7 @@ public class ActivityOne extends Activity {
 		super.onStart();
 
 		// TODO: Emit LogCat message
-				Log.i("COURSERA","Entered the onStart method");
+				Log.i("Lab-Activity","Entered the onStart method");
 
 				// TODO:
 				// Update the appropriate count variable
@@ -120,7 +120,7 @@ public class ActivityOne extends Activity {
 		super.onResume();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA","Entered the onResume method");
+		Log.i("Lab-Activity","Entered the onResume method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -138,7 +138,7 @@ public class ActivityOne extends Activity {
 
 		// TODO: Emit LogCat message
 
-		Log.i("COURSERA","Entered the onPause method");
+		Log.i("Lab-Activity","Entered the onPause method");
 
 	}
 
@@ -148,7 +148,7 @@ public class ActivityOne extends Activity {
 
 		// TODO: Emit LogCat message
 
-		Log.i("COURSERA","Entered the onStop method");
+		Log.i("Lab-Activity","Entered the onStop method");
 
 	}
 
@@ -157,7 +157,7 @@ public class ActivityOne extends Activity {
 		super.onRestart();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA","Entered the onRestart method");
+		Log.i("Lab-Activity","Entered the onRestart method");
 
 		// TODO:
 		// Update the appropriate count variable
@@ -173,7 +173,7 @@ public class ActivityOne extends Activity {
 		super.onDestroy();
 
 		// TODO: Emit LogCat message
-		Log.i("COURSERA","Entered the onDestroy method");
+		Log.i("Lab-Activity","Entered the onDestroy method");
 	}
 
 	@Override
@@ -183,7 +183,7 @@ public class ActivityOne extends Activity {
 		// 4 lines of code, one for every count variable
 
 		super.onSaveInstanceState(savedInstanceState);
-		Log.i("COURSERA","Entered the onSaveInstanceState method");
+		//Log.i("Lab-Activity1","Entered the onSaveInstanceState method");
 
 		savedInstanceState.putLong(START_KEY, mStart);
 		savedInstanceState.putLong(CREATE_KEY, mCreate);
