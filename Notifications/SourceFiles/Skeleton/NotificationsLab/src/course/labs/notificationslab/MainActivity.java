@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements SelectionListener {
 
@@ -84,12 +85,13 @@ public class MainActivity extends Activity implements SelectionListener {
 			// Show a Toast Notification to inform user that 
 			// the app is "Downloading Tweets from Network"
 			log ("Issuing Toast Message");
-
+			Toast.makeText(MainActivity.this, "Downloading Tweets from Network",Toast.LENGTH_SHORT).show();
 			
 			
 			// TODO:
-			// Start new AsyncTask to download Tweets from network
-
+			// Start new AsyncTask to download Tweets from network			
+			DownloaderTask downloaderTask = new DownloaderTask(this);
+			downloaderTask.execute(URL_LGAGA, URL_RBLACK , URL_TSWIFT);
 
 
 			
