@@ -167,13 +167,14 @@ public class DownloaderTask extends AsyncTask<String, Void, String[]> {
 
 						// TODO: Check whether the result code is RESULT_OK
 
-						if (Activity.RESULT_OK == getResultCode()) {
+						if (Activity.RESULT_OK != getResultCode()) {
 
 							// TODO:  If so, create a PendingIntent using the
 							// restartMainActivityIntent and set its flags
 							// to FLAG_UPDATE_CURRENT
-																					
-
+							Intent mainIntent = new Intent(mApplicationContext, MainActivity.class);
+							PendingIntent pendingIntent = PendingIntent.getActivity(mApplicationContext, MY_NOTIFICATION_ID, mainIntent, Intent.FLAG_ACTIVITY_NEW_TASK);												
+							
 
 							// Uses R.layout.custom_notification for the
 							// layout of the notification View. The xml 
@@ -194,13 +195,15 @@ public class DownloaderTask extends AsyncTask<String, Void, String[]> {
 							// android.R.drawable.stat_sys_warning
 							// for the small icon. You should also setAutoCancel(true). 
 
-							Notification.Builder notificationBuilder = new Notification.Builder(mApplicationContext);
-							notificationBuilder.setContent(mContentView);
-							notificationBuilder.setAutoCancel(true);
-							Notification notification = notificationBuilder.build();
-
+							Notification.Builder notificationBuilder = new Notification.Builder(mApplicationContext)
+							.setContent(mContentView)
+							.setAutoCancel(true)
+							.setContentIntent(pendingIntent)
+							.setSmallIcon(android.R.drawable.stat_sys_warning);
+							
 							// TODO: Send the notification
-							notification.notify();
+							NotificationManager notificationManger = (NotificationManager) mApplicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
+							notificationManger.notify(MY_NOTIFICATION_ID, notificationBuilder.build());
 							
 							
 							log("Notification Area Notification sent");
