@@ -39,7 +39,7 @@ public class ToDoManagerActivity extends ListActivity {
 	private static final int MENU_DUMP = Menu.FIRST + 1;
 
 	ToDoListAdapter mAdapter;
-
+oncreatecon
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
