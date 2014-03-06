@@ -75,16 +75,25 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 			public void onClick(View arg0) {
 				log("Entered footerView.OnClickListener.onClick()");
 				
-				Location tmp = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-				if(tmp == null){
+				//Location tmp = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				if(mLastLocationReading == null){
 					footerView.setEnabled(false);
 					Toast.makeText(PlaceViewActivity.this, "Location data is not available", Toast.LENGTH_SHORT).show();
 					log("Location data is not available");
 				}else{
 					footerView.setEnabled(true);
-					if(tmp != mLastLocationReading){
+					
+					boolean found = false;
+					for(PlaceRecord record : mAdapter.getList()){
+						if(record.getLocation() == mLastLocationReading){
+							found = true; 
+							break;
+						}
+					}
+					
+					if(!found){
 						log("Starting Place Download");
-						new PlaceDownloaderTask(PlaceViewActivity.this).execute(tmp);
+						new PlaceDownloaderTask(PlaceViewActivity.this).execute(mLastLocationReading);
 						
 					}else{
 						Toast.makeText(PlaceViewActivity.this, "You already have this location badge", Toast.LENGTH_SHORT).show();
@@ -123,8 +132,14 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 
 		// TODO - Check NETWORK_PROVIDER for an existing location reading.
 		// Only keep this last reading if it is fresh - less than 5 minutes old.
+		
+		Location tmp = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		if(mLastLocationReading != null && (tmp.getTime() - mLastLocationReading.getTime())/1000l > 5*60){
+			mLastLocationReading = null;
+		}
 
 		// TODO - register to receive location updates from NETWORK_PROVIDER
+		mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, mMinTime, mMinDistance, this);
 
 	}
 
@@ -134,6 +149,7 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 		mMockLocationProvider.shutdown();
 
 		// TODO - unregister for location updates
+		mLocationManager.removeUpdates(this);
 
 		super.onPause();
 	}
@@ -155,7 +171,11 @@ public class PlaceViewActivity extends ListActivity implements LocationListener 
 		// the current location
 		// 3) If the current location is newer than the last locations, keep the
 		// current location.
-
+		if(mLastLocationReading == null){
+			mLastLocationReading = currentLocation;
+		}else if(currentLocation.getTime() > mLastLocationReading.getTime()){
+			mLastLocationReading = currentLocation;
+		}
 	}
 
 	@Override
