@@ -31,7 +31,7 @@ import android.webkit.WebView.FindListener;
 import android.widget.TextView;
 
 public class MainActivity extends FragmentActivity implements
-		ActionBar.TabListener, OnInfoWindowClickListener{
+		ActionBar.TabListener, IFragmentCallback{
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -120,11 +120,11 @@ public class MainActivity extends FragmentActivity implements
 	 * one of the sections/tabs/pages.
 	 */
 	public class SectionsPagerAdapter extends FragmentPagerAdapter {
-		private OnInfoWindowClickListener markerListener = null;
+		private IFragmentCallback fragmentCallback = null;
 		
-		public SectionsPagerAdapter(FragmentManager fm, OnInfoWindowClickListener markerListener) {
+		public SectionsPagerAdapter(FragmentManager fm, IFragmentCallback fragmentCallback) {
 			super(fm);
-			this.markerListener = markerListener;
+			this.fragmentCallback = fragmentCallback;
 		}
 
 		@Override
@@ -139,7 +139,7 @@ public class MainActivity extends FragmentActivity implements
 			
 			if(position == 0){
 				MyMapFragment myMap = new MyMapFragment();
-				myMap.setMarkerListener(markerListener);
+				myMap.setFragmentListener(fragmentCallback);
 				return myMap;
 			}
 			else return fragment;
@@ -194,14 +194,14 @@ public class MainActivity extends FragmentActivity implements
 	}
 
 	public static class MyMapFragment extends Fragment{
-		private OnInfoWindowClickListener listener = null;
+		private IFragmentCallback fragmentCallback = null;
 		
 		public MyMapFragment() {
 			super();
 		}
 		
-		public void setMarkerListener(OnInfoWindowClickListener listener){			
-			this.listener = listener;
+		public void setFragmentListener(IFragmentCallback fragmentCallback){			
+			this.fragmentCallback = fragmentCallback;
 		}
 		
 		@Override
@@ -213,16 +213,24 @@ public class MainActivity extends FragmentActivity implements
 			
 				
 			Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
-			map.setOnInfoWindowClickListener(listener);
+			map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
+				
+				@Override
+				public void onInfoWindowClick(Marker marker) {
+					
+					marker.hideInfoWindow();
+					fragmentCallback.markerInfoClicked(marker);
+				}
+			});
 						
 			return rootView;
 		}
 	}
 
 	@Override
-	public void onInfoWindowClick(Marker marker) {
+	public void markerInfoClicked(Marker marker) {
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG",marker.getTitle());
-		marker.hideInfoWindow();
 	}
+
 }
