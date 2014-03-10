@@ -2,7 +2,16 @@ package hr.andrijic.uslugehr;
 
 import java.util.Locale;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import android.app.ActionBar;
+import android.app.Application;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -11,16 +20,18 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView.FindListener;
 import android.widget.TextView;
 
 public class MainActivity extends FragmentActivity implements
-		ActionBar.TabListener {
+		ActionBar.TabListener, OnInfoWindowClickListener{
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -50,7 +61,7 @@ public class MainActivity extends FragmentActivity implements
 		// Create the adapter that will return a fragment for each of the three
 		// primary sections of the app.
 		mSectionsPagerAdapter = new SectionsPagerAdapter(
-				getSupportFragmentManager());
+				getSupportFragmentManager(), this);
 
 		// Set up the ViewPager with the sections adapter.
 		mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -109,9 +120,11 @@ public class MainActivity extends FragmentActivity implements
 	 * one of the sections/tabs/pages.
 	 */
 	public class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-		public SectionsPagerAdapter(FragmentManager fm) {
+		private OnInfoWindowClickListener markerListener = null;
+		
+		public SectionsPagerAdapter(FragmentManager fm, OnInfoWindowClickListener markerListener) {
 			super(fm);
+			this.markerListener = markerListener;
 		}
 
 		@Override
@@ -123,10 +136,13 @@ public class MainActivity extends FragmentActivity implements
 			Bundle args = new Bundle();
 			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
 			fragment.setArguments(args);
-						
-			return new com.google.android.gms.maps.SupportMapFragment();
 			
-		//	return fragment;
+			if(position == 0){
+				MyMapFragment myMap = new MyMapFragment();
+				myMap.setMarkerListener(markerListener);
+				return myMap;
+			}
+			else return fragment;
 		}
 
 		@Override
@@ -177,4 +193,36 @@ public class MainActivity extends FragmentActivity implements
 		}
 	}
 
+	public static class MyMapFragment extends Fragment{
+		private OnInfoWindowClickListener listener = null;
+		
+		public MyMapFragment() {
+			super();
+		}
+		
+		public void setMarkerListener(OnInfoWindowClickListener listener){			
+			this.listener = listener;
+		}
+		
+		@Override
+		public View onCreateView(LayoutInflater inflater, ViewGroup container,
+				Bundle savedInstanceState) {
+			View rootView = inflater.inflate(R.layout.map, container, false);
+			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
+			GoogleMap map = fragment.getMap();
+			
+				
+			Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
+			map.setOnInfoWindowClickListener(listener);
+						
+			return rootView;
+		}
+	}
+
+	@Override
+	public void onInfoWindowClick(Marker marker) {
+		// TODO Auto-generated method stub
+		Log.i("MOJTAG",marker.getTitle());
+		marker.hideInfoWindow();
+	}
 }
