@@ -73,11 +73,7 @@ public class MainActivity extends FragmentActivity implements
 		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
 		Location location = locationManager.getLastKnownLocation(bestProvider);
 		
-		
-		if(location.getAccuracy()>100 || (System.currentTimeMillis()-location.getTime())>2*60*1000l){		
-			locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
-		}
-			
+		locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
 	}
 
 	@Override
@@ -283,6 +279,7 @@ public class MainActivity extends FragmentActivity implements
 						super.onActivityCreated(savedInstanceState);
 						
 						GoogleMap map = getMap();
+						//map.setMyLocationEnabled(true);
 						
 						Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
 						map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
@@ -321,7 +318,7 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public void onLocationChanged(Location location) {
 		
-		if(location != null && location.getAccuracy()<100){
+		if(location != null && location.getAccuracy()<2000){
 			myMapFragment.setLocation(location);
 			locationManager.removeUpdates(this);
 			
