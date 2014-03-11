@@ -2,10 +2,14 @@ package hr.andrijic.uslugehr;
 
 import java.util.Locale;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -13,6 +17,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import android.app.ActionBar;
 import android.app.Application;
 import android.app.FragmentTransaction;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -31,7 +39,7 @@ import android.webkit.WebView.FindListener;
 import android.widget.TextView;
 
 public class MainActivity extends FragmentActivity implements
-		ActionBar.TabListener, IFragmentCallback{
+		ActionBar.TabListener, IFragmentCallback, LocationListener{
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -42,18 +50,45 @@ public class MainActivity extends FragmentActivity implements
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
 	SectionsPagerAdapter mSectionsPagerAdapter;
+	LocationManager locationManager;
+	int TABPOSITION_MAP = 0;
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+	MyMapFragment myMapFragment;
+	
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+		locationManager.removeUpdates(this);
+	}
+	
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
+		Location location = locationManager.getLastKnownLocation(bestProvider);
+		
+		
+		if(location.getAccuracy()>100 || (System.currentTimeMillis()-location.getTime())>2*60*1000l){		
+			locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
+		}
+			
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		//setContentView(R.layout.map);
-
+				
+		locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+		
+		
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
@@ -132,17 +167,20 @@ public class MainActivity extends FragmentActivity implements
 			// getItem is called to instantiate the fragment for the given page.
 			// Return a DummySectionFragment (defined as a static inner class
 			// below) with the page number as its lone argument.
-			Fragment fragment = new DummySectionFragment();
-			Bundle args = new Bundle();
-			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-			fragment.setArguments(args);
 			
-			if(position == 0){
-				MyMapFragment myMap = new MyMapFragment();
-				myMap.setFragmentListener(fragmentCallback);
-				return myMap;
+			
+			if(position == TABPOSITION_MAP){
+				myMapFragment = new MyMapFragment();
+				myMapFragment.setFragmentListener(fragmentCallback);
+				return myMapFragment;
+			}else{
+				Fragment fragment = new DummySectionFragment();
+				Bundle args = new Bundle();
+				args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+				fragment.setArguments(args);
+				
+				return fragment;
 			}
-			else return fragment;
 		}
 
 		@Override
@@ -195,6 +233,8 @@ public class MainActivity extends FragmentActivity implements
 
 	public static class MyMapFragment extends Fragment{
 		private IFragmentCallback fragmentCallback = null;
+		private SupportMapFragment fragment = null;
+	
 		
 		public MyMapFragment() {
 			super();
@@ -204,24 +244,69 @@ public class MainActivity extends FragmentActivity implements
 			this.fragmentCallback = fragmentCallback;
 		}
 		
+		public void setLocation(Location location){
+			
+			//SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
+			GoogleMap map = fragment.getMap();
+			
+			if(location != null && map != null){
+				CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
+						new CameraPosition(
+								new LatLng(location.getLatitude(), location.getLongitude()),
+								5,
+								0,
+								0
+						)
+				);
+				map.moveCamera(cameraUpdate);
+			}
+		}
+		
+		@Override
+		public void onDestroyView() {			
+			super.onDestroyView();
+//			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
+			if(fragment != null){
+				getFragmentManager().beginTransaction().remove(fragment).commit();
+			}
+		}
+		
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.map, container, false);
-			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-			GoogleMap map = fragment.getMap();
 			
-				
-			Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
-			map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
-				
-				@Override
-				public void onInfoWindowClick(Marker marker) {
-					
-					marker.hideInfoWindow();
-					fragmentCallback.markerInfoClicked(marker);
-				}
-			});
+			if(fragment == null){
+				fragment = new SupportMapFragment(){
+					@Override
+					public void onActivityCreated(Bundle savedInstanceState) {						
+						super.onActivityCreated(savedInstanceState);
+						
+						GoogleMap map = getMap();
+						
+						Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
+						map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
+							
+							@Override
+							public void onInfoWindowClick(Marker marker) {
+								
+								marker.hideInfoWindow();
+								fragmentCallback.markerInfoClicked(marker);
+							}
+						});
+						
+						map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+							
+							@Override
+							public boolean onMyLocationButtonClick() {
+								return false;
+							}
+						});
+					}
+				};				
+			}
+			
+			getFragmentManager().beginTransaction().add(R.id.mapPlaceholder, fragment).commit();
 						
 			return rootView;
 		}
@@ -231,6 +316,35 @@ public class MainActivity extends FragmentActivity implements
 	public void markerInfoClicked(Marker marker) {
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG",marker.getTitle());
+	}
+
+	@Override
+	public void onLocationChanged(Location location) {
+		
+		if(location != null && location.getAccuracy()<100){
+			myMapFragment.setLocation(location);
+			locationManager.removeUpdates(this);
+			
+			Log.i("MOJTAG","1");
+		}
+	}
+
+	@Override
+	public void onProviderDisabled(String provider) {
+		// TODO Auto-generated method stub
+		Log.i("MOJTAG","1");
+	}
+
+	@Override
+	public void onProviderEnabled(String provider) {
+		// TODO Auto-generated method stub
+		Log.i("MOJTAG","1");
+	}
+
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras) {
+		// TODO Auto-generated method stub
+		Log.i("MOJTAG","1");
 	}
 
 }
