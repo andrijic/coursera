@@ -46,7 +46,7 @@ import android.webkit.WebView.FindListener;
 import android.widget.TextView;
 
 public class MainActivity extends FragmentActivity implements
-		ActionBar.TabListener, IFragmentCallback, LocationListener{
+		ActionBar.TabListener, IFragmentCallback{
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -57,7 +57,7 @@ public class MainActivity extends FragmentActivity implements
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
 	SectionsPagerAdapter mSectionsPagerAdapter;
-	LocationManager locationManager;
+	
 	int TABPOSITION_MAP = 0;
 
 	/**
@@ -65,23 +65,16 @@ public class MainActivity extends FragmentActivity implements
 	 */
 	private ViewPager mViewPager;
 	private static MyMapFragment myMapFragment;
-	private static Location lastGoodLocation = null;	
+		
 	
 	@Override
 	protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
-		locationManager.removeUpdates(this);
+		
 	}
 	
-	@Override
-	protected void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
-		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
-				
-		locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
-	}
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +82,7 @@ public class MainActivity extends FragmentActivity implements
 		setContentView(R.layout.activity_main);
 		//setContentView(R.layout.map);
 				
-		locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+		
 		
 		
 		
@@ -235,135 +228,7 @@ public class MainActivity extends FragmentActivity implements
 		}
 	}
 
-	public static class MyMapFragment extends Fragment{
-		private IFragmentCallback fragmentCallback = null;
-		private SupportMapFragment fragment = null;
 	
-		
-		public MyMapFragment() {
-			super();
-		}
-		
-		public void setFragmentListener(IFragmentCallback fragmentCallback){			
-			this.fragmentCallback = fragmentCallback;
-		}
-		
-		public void setLocation(Location location){
-			
-			//SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-			GoogleMap map = fragment.getMap();
-			
-			if(location != null && map != null){
-				CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
-						new CameraPosition(
-								new LatLng(location.getLatitude(), location.getLongitude()),
-								13,
-								0,
-								0
-						)
-				);
-				map.moveCamera(cameraUpdate);
-			}
-		}
-		
-//		@Override
-//		public void onDestroyView() {			
-//			super.onDestroyView();
-////			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-//			if(fragment != null){
-//				getFragmentManager().beginTransaction().remove(fragment).commit();
-//			}
-//		}
-		
-		
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.map, container, false);
-			
-			FragmentManager fm = getChildFragmentManager();
-			SupportMapFragment sf = (SupportMapFragment)fm.findFragmentById(R.id.mapPlaceholder);
-			if(sf ==null){
-				fragment = new SupportMapFragment(){
-					@Override
-					public void onActivityCreated(Bundle savedInstanceState) {						
-						super.onActivityCreated(savedInstanceState);
-						
-						GoogleMap map = getMap();
-						//map.setMyLocationEnabled(true);
-						if(lastGoodLocation != null){
-							CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
-									new CameraPosition(
-											new LatLng(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude()),
-											13,
-											0,
-											0
-									)
-							);
-							map.moveCamera(cameraUpdate);
-						}
-						
-						Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
-						map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
-							
-							@Override
-							public void onInfoWindowClick(Marker marker) {
-								
-								marker.hideInfoWindow();
-								fragmentCallback.markerInfoClicked(marker);
-							}
-						});
-						
-						map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
-							
-							@Override
-							public boolean onMyLocationButtonClick() {
-								return false;
-							}
-						});
-					}
-				};				
-				
-				fm.beginTransaction().replace(R.id.mapPlaceholder, fragment).commit();
-			}
-			
-			TextView locationText = ((TextView)rootView.findViewById(R.id.editText1));
-			
-			locationText.setOnClickListener(new View.OnClickListener() {				
-				@Override
-				public void onClick(View v) {					
-					((TextView)v).setText("");					
-				}
-			}); 
-			
-			locationText.setOnKeyListener(new View.OnKeyListener() {
-				
-				@Override
-				public boolean onKey(View v, int keyCode, KeyEvent event) {
-					if(KeyEvent.KEYCODE_ENTER == keyCode){
-						TextView pom = (TextView)v;
-						
-						Geocoder geocoder = new Geocoder(getActivity().getApplicationContext());
-						try {
-							List<Address> addresses = geocoder.getFromLocationName(pom.getText().toString(), 1);
-							Address address = addresses.get(0);
-							if(address!=null){
-								lastGoodLocation.setLongitude(address.getLongitude());
-								lastGoodLocation.setLatitude(address.getLongitude());
-								myMapFragment.setLocation(lastGoodLocation);
-							}
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					return true;
-				}
-			});
-			
-			return rootView;
-		}
-	}
 
 	@Override
 	public void markerInfoClicked(Marker marker) {
@@ -371,54 +236,5 @@ public class MainActivity extends FragmentActivity implements
 		Log.i("MOJTAG",marker.getTitle());
 	}
 
-	@Override
-	public void onLocationChanged(Location location) {
-		
-		if(location != null && location.getAccuracy()<2000){
-			lastGoodLocation = location;
-			updateLocationTextForLastGoogLocation();
-		}
-	}
 	
-	public void updateLocationTextForLastGoogLocation(){
-		myMapFragment.setLocation(lastGoodLocation);
-		locationManager.removeUpdates(this);
-		
-		Geocoder geocoder = new Geocoder(this);
-		List<Address> addresses;
-		try {
-			addresses = geocoder.getFromLocation(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude(), 1);
-			
-			if(addresses != null && addresses.size() > 0){
-				Address pom = addresses.get(0);
-									
-				((TextView)findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
-			}else{
-				((TextView)findViewById(R.id.editText1)).setText("Unknown address for Lat: "+lastGoodLocation.getLatitude()+
-						" Long: "+lastGoodLocation.getLongitude());
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-		Log.i("MOJTAG","1");
-	}
-
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-		Log.i("MOJTAG","1");
-	}
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
-		Log.i("MOJTAG","1");
-	}
-
 }
