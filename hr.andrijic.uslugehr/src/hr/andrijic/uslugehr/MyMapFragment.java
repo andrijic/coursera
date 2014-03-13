@@ -48,7 +48,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	private Location lastGoodLocation = null;
 	
 	public MyMapFragment() {
-		super();
+		// TODO Auto-generated constructor stub
 	}
 	
 	public void setFragmentListener(IFragmentCallback fragmentCallback){			
@@ -105,6 +105,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	public void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		Log.i(MOJTAG,"onCreate");
+		
+		setRetainInstance(true);
 		
 		locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 		

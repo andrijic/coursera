@@ -1,6 +1,7 @@
 package hr.andrijic.uslugehr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -11,6 +12,8 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -20,6 +23,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Application;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.inputmethodservice.Keyboard.Key;
 import android.location.Address;
 import android.location.Criteria;
@@ -247,7 +251,6 @@ public class MainActivity extends FragmentActivity implements
 		Log.i("MOJTAG",marker.getTitle());
 			
 	}
-
 
 
 
