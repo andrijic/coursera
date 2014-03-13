@@ -17,8 +17,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Application;
 import android.app.FragmentTransaction;
+import android.inputmethodservice.Keyboard.Key;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -34,6 +36,7 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,7 +64,7 @@ public class MainActivity extends FragmentActivity implements
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	private ViewPager mViewPager;
-	private MyMapFragment myMapFragment;
+	private static MyMapFragment myMapFragment;
 	private static Location lastGoodLocation = null;	
 	
 	@Override
@@ -87,6 +90,7 @@ public class MainActivity extends FragmentActivity implements
 		//setContentView(R.layout.map);
 				
 		locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+		
 		
 		
 		// Set up the action bar.
@@ -271,6 +275,7 @@ public class MainActivity extends FragmentActivity implements
 //			}
 //		}
 		
+		
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
@@ -322,6 +327,40 @@ public class MainActivity extends FragmentActivity implements
 				fm.beginTransaction().replace(R.id.mapPlaceholder, fragment).commit();
 			}
 			
+			TextView locationText = ((TextView)rootView.findViewById(R.id.editText1));
+			
+			locationText.setOnClickListener(new View.OnClickListener() {				
+				@Override
+				public void onClick(View v) {					
+					((TextView)v).setText("");					
+				}
+			}); 
+			
+			locationText.setOnKeyListener(new View.OnKeyListener() {
+				
+				@Override
+				public boolean onKey(View v, int keyCode, KeyEvent event) {
+					if(KeyEvent.KEYCODE_ENTER == keyCode){
+						TextView pom = (TextView)v;
+						
+						Geocoder geocoder = new Geocoder(getActivity().getApplicationContext());
+						try {
+							List<Address> addresses = geocoder.getFromLocationName(pom.getText().toString(), 1);
+							Address address = addresses.get(0);
+							if(address!=null){
+								lastGoodLocation.setLongitude(address.getLongitude());
+								lastGoodLocation.setLatitude(address.getLongitude());
+								myMapFragment.setLocation(lastGoodLocation);
+							}
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					return true;
+				}
+			});
+			
 			return rootView;
 		}
 	}
@@ -337,23 +376,30 @@ public class MainActivity extends FragmentActivity implements
 		
 		if(location != null && location.getAccuracy()<2000){
 			lastGoodLocation = location;
-			myMapFragment.setLocation(lastGoodLocation);
-			locationManager.removeUpdates(this);
+			updateLocationTextForLastGoogLocation();
+		}
+	}
+	
+	public void updateLocationTextForLastGoogLocation(){
+		myMapFragment.setLocation(lastGoodLocation);
+		locationManager.removeUpdates(this);
+		
+		Geocoder geocoder = new Geocoder(this);
+		List<Address> addresses;
+		try {
+			addresses = geocoder.getFromLocation(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude(), 1);
 			
-			Geocoder geocoder = new Geocoder(this);
-			List<Address> addresses;
-			try {
-				addresses = geocoder.getFromLocation(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude(), 1);
-				
-				if(addresses != null && addresses.size() > 0){
-					Address pom = addresses.get(0);
-										
-					((TextView)findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if(addresses != null && addresses.size() > 0){
+				Address pom = addresses.get(0);
+									
+				((TextView)findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
+			}else{
+				((TextView)findViewById(R.id.editText1)).setText("Unknown address for Lat: "+lastGoodLocation.getLatitude()+
+						" Long: "+lastGoodLocation.getLongitude());
 			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
