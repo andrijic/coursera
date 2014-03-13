@@ -40,6 +40,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView.FindListener;
@@ -73,6 +75,7 @@ public class MainActivity extends FragmentActivity implements
 		super.onPause();
 		
 	}
+	
 	
 	
 
@@ -125,7 +128,15 @@ public class MainActivity extends FragmentActivity implements
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
+		menu.add(5, 5, 0,"menu 1").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		menu.addSubMenu(5, 5, 0,"sub menu 1");
+		
+		
+		
 		getMenuInflater().inflate(R.menu.main, menu);
+		
+		
+		
 		return true;
 	}
 
@@ -234,7 +245,11 @@ public class MainActivity extends FragmentActivity implements
 	public void markerInfoClicked(Marker marker) {
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG",marker.getTitle());
+			
 	}
+
+
+
 
 	
 }

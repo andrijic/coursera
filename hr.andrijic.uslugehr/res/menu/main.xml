@@ -3,7 +3,13 @@
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_settings"/>
+        android:showAsAction="ifRoom" android:title="@string/app_name">
+<menu>
+    <item android:id="@+id/item1" android:showAsAction="ifRoom" android:title="@string/common_google_play_services_enable_button"/>
+    <item android:id="@+id/item2" android:showAsAction="ifRoom" android:title="@string/auth_client_using_bad_version_title"/>
+</menu>
+      
+        </item>
+
 
 </menu>

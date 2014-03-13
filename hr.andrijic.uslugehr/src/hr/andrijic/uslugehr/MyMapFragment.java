@@ -1,9 +1,11 @@
 package hr.andrijic.uslugehr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -15,8 +17,11 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -25,6 +30,8 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -33,9 +40,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MyMapFragment extends Fragment implements LocationListener{
 	private IFragmentCallback fragmentCallback = null;	
 	private LocationManager locationManager;
-	GoogleMap map;
-	String MOJTAG = "MOJTAG";
-	
+	private GoogleMap map;
+	private String MOJTAG = "MOJTAG";
+	private ArrayList<Marker> markers = new ArrayList<Marker>();
+	private Marker currentPositionMarker;
+		
 	private Location lastGoodLocation = null;
 	
 	public MyMapFragment() {
@@ -49,31 +58,44 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	public void setLocation(Location location){
 		
 		//SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-		Log.i(MOJTAG,"location : "+location.getLongitude()+", "+location.getLatitude());
+		Log.i(MOJTAG,"setLocation : "+location.getLongitude()+", "+location.getLatitude());
 		
 		if(location != null && map != null){
 			CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
 					new CameraPosition(
 							new LatLng(location.getLatitude(), location.getLongitude()),
-							13,
+							12,
 							0,
 							0
 					)
 			);
-			map.animateCamera(cameraUpdate);			
+			map.animateCamera(cameraUpdate);	
+			
+			if(currentPositionMarker == null){
+				BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_maps_indicator_current_position);
+				MarkerOptions options = new MarkerOptions()
+												.position(new LatLng(location.getLatitude(), location.getLongitude()))
+												.title("Hello world");
+				options.icon(descriptor);
+				
+				currentPositionMarker = map.addMarker(options);
+			}
 		}
 	}
 	
 	@Override
 	public void onPause() {	
 		super.onPause();
+		Log.i(MOJTAG,"onPause");
+		
 		locationManager.removeUpdates(this);
 	}
 	
 	@Override
-	public void onResume() {
-		// TODO Auto-generated method stub
+	public void onResume() {		
 		super.onResume();
+		Log.i(MOJTAG,"onResume"); 
+		
 		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
 				
 		locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
@@ -82,7 +104,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	@Override
 	public void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
-		
+		Log.i(MOJTAG,"onCreate");
 		
 		locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 		
@@ -108,7 +130,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 						map.moveCamera(cameraUpdate);
 					}
 					
-					map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
+					Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
+					markers.add(marker);
+					
 					map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
 						
 						@Override
@@ -122,6 +146,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			};				
 			
 			fm.beginTransaction().replace(R.id.mapPlaceholder, fragment).commit();
+			
 		}
 	}
 	
@@ -138,9 +163,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		Log.i(MOJTAG,"onCreateView");
+		
 		View rootView = inflater.inflate(R.layout.map, container, false);
-		
-		
 		
 		TextView locationText = ((TextView)rootView.findViewById(R.id.editText1));
 		
@@ -150,6 +175,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 				((TextView)v).setText("");					
 			}
 		}); 
+		
+		
 		
 		return rootView;
 	}
@@ -162,6 +189,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			lastGoodLocation = location;
 			setLocation(lastGoodLocation);
 			Log.i("MOJTAG","lastGoodLocation set");
+			
+			updateLocationTextForLastGoogLocation();
 			
 			locationManager.removeUpdates(this);
 		}
@@ -179,7 +208,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 									
 				((TextView)getView().findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
 			}else{
-				((TextView)getView().findViewById(R.id.editText1)).setText("Unknown address for Lat: "+lastGoodLocation.getLatitude()+
+				((TextView)getView().findViewById(R.id.editText1)).setText(R.string.UNKOWN_ADDRESS+" Lat: "+lastGoodLocation.getLatitude()+
 						" Long: "+lastGoodLocation.getLongitude());
 			}
 		} catch (IOException e) {
@@ -205,5 +234,6 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG","onStatusChanged");
 	}
+
 
 }
