@@ -1,5 +1,7 @@
 package hr.andrijic.uslugehr;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -17,7 +19,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import android.app.ActionBar;
 import android.app.Application;
 import android.app.FragmentTransaction;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -56,8 +60,9 @@ public class MainActivity extends FragmentActivity implements
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	ViewPager mViewPager;
-	MyMapFragment myMapFragment;
+	private ViewPager mViewPager;
+	private MyMapFragment myMapFragment;
+	private static Location lastGoodLocation = null;	
 	
 	@Override
 	protected void onPause() {
@@ -71,8 +76,7 @@ public class MainActivity extends FragmentActivity implements
 		// TODO Auto-generated method stub
 		super.onResume();
 		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
-		Location location = locationManager.getLastKnownLocation(bestProvider);
-		
+				
 		locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
 	}
 
@@ -249,7 +253,7 @@ public class MainActivity extends FragmentActivity implements
 				CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
 						new CameraPosition(
 								new LatLng(location.getLatitude(), location.getLongitude()),
-								5,
+								13,
 								0,
 								0
 						)
@@ -258,21 +262,23 @@ public class MainActivity extends FragmentActivity implements
 			}
 		}
 		
-		@Override
-		public void onDestroyView() {			
-			super.onDestroyView();
-//			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-			if(fragment != null){
-				getFragmentManager().beginTransaction().remove(fragment).commit();
-			}
-		}
+//		@Override
+//		public void onDestroyView() {			
+//			super.onDestroyView();
+////			SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
+//			if(fragment != null){
+//				getFragmentManager().beginTransaction().remove(fragment).commit();
+//			}
+//		}
 		
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(R.layout.map, container, false);
 			
-			if(fragment == null){
+			FragmentManager fm = getChildFragmentManager();
+			SupportMapFragment sf = (SupportMapFragment)fm.findFragmentById(R.id.mapPlaceholder);
+			if(sf ==null){
 				fragment = new SupportMapFragment(){
 					@Override
 					public void onActivityCreated(Bundle savedInstanceState) {						
@@ -280,6 +286,17 @@ public class MainActivity extends FragmentActivity implements
 						
 						GoogleMap map = getMap();
 						//map.setMyLocationEnabled(true);
+						if(lastGoodLocation != null){
+							CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
+									new CameraPosition(
+											new LatLng(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude()),
+											13,
+											0,
+											0
+									)
+							);
+							map.moveCamera(cameraUpdate);
+						}
 						
 						Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
 						map.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
@@ -301,10 +318,10 @@ public class MainActivity extends FragmentActivity implements
 						});
 					}
 				};				
+				
+				fm.beginTransaction().replace(R.id.mapPlaceholder, fragment).commit();
 			}
 			
-			getFragmentManager().beginTransaction().add(R.id.mapPlaceholder, fragment).commit();
-						
 			return rootView;
 		}
 	}
@@ -319,10 +336,24 @@ public class MainActivity extends FragmentActivity implements
 	public void onLocationChanged(Location location) {
 		
 		if(location != null && location.getAccuracy()<2000){
-			myMapFragment.setLocation(location);
+			lastGoodLocation = location;
+			myMapFragment.setLocation(lastGoodLocation);
 			locationManager.removeUpdates(this);
 			
-			Log.i("MOJTAG","1");
+			Geocoder geocoder = new Geocoder(this);
+			List<Address> addresses;
+			try {
+				addresses = geocoder.getFromLocation(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude(), 1);
+				
+				if(addresses != null && addresses.size() > 0){
+					Address pom = addresses.get(0);
+										
+					((TextView)findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
