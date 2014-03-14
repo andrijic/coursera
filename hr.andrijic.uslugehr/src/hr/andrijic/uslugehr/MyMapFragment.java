@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
+import android.hardware.input.InputManager;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -24,6 +25,10 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -169,16 +174,47 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		
 		View rootView = inflater.inflate(R.layout.map, container, false);
 		
-		TextView locationText = ((TextView)rootView.findViewById(R.id.editText1));
+		final AutoCompleteTextView locationText = ((AutoCompleteTextView)rootView.findViewById(R.id.editText1));
+		
+		locationText.setEnabled(false);
+		locationText.setText(R.string.LOOKING_LOCATION);
 		
 		locationText.setOnClickListener(new View.OnClickListener() {				
 			@Override
 			public void onClick(View v) {					
-				((TextView)v).setText("");					
+				((AutoCompleteTextView)v).setText("");					
 			}
 		}); 
 		
+		locationText.setThreshold(5);	
+		final AutocompleteArrayAdapter adapter = new AutocompleteArrayAdapter(getActivity().getApplicationContext(), R.layout.list_item);
+		locationText.setAdapter(adapter);
+		locationText.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+					long arg3) {
+				Address address = adapter.getArrayList().get(arg2);
+				Location location = new Location("reversegeocoded");
+				location.setLatitude(address.getLatitude());
+				location.setLongitude(address.getLongitude());
+				setLocation(location);	
+								
+				locationText.setEnabled(false);
+			}
+		});
 		
+		ImageButton imageButton = (ImageButton)rootView.findViewById(R.id.imageButton_changeAddress);
+		imageButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {				
+				locationText.setEnabled(true);
+				locationText.setText("");
+				
+				InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+				inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			}
+		});		
 		
 		return rootView;
 	}
@@ -208,9 +244,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			if(addresses != null && addresses.size() > 0){
 				Address pom = addresses.get(0);
 									
-				((TextView)getView().findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
+				((AutoCompleteTextView)getView().findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
 			}else{
-				((TextView)getView().findViewById(R.id.editText1)).setText(R.string.UNKOWN_ADDRESS+" Lat: "+lastGoodLocation.getLatitude()+
+				((AutoCompleteTextView)getView().findViewById(R.id.editText1)).setText(R.string.UNKOWN_ADDRESS+" Lat: "+lastGoodLocation.getLatitude()+
 						" Long: "+lastGoodLocation.getLongitude());
 			}
 		} catch (IOException e) {

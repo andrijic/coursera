@@ -3,23 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/editText1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/imageButton_currentLocation"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@+id/imageButton1"
-        android:ems="10" />
+        android:layout_toLeftOf="@+id/imageButton_changeAddress"
+        android:ems="10"
+        android:height="20dp"
+        android:lines="2"
+        android:maxLines="2" >
 
-    <!-- fragment
+        <requestFocus />
+    </AutoCompleteTextView>
+
+    <!--
+         fragment
         android:id="@+id/fragment1"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/editText1" /-->
+        android:layout_below="@+id/editText1" /
+    -->
 
     <LinearLayout
         android:id="@+id/mapPlaceholder"
@@ -30,25 +39,23 @@
         android:layout_alignParentRight="true"
         android:layout_below="@+id/editText1"
         android:orientation="vertical" >
-
     </LinearLayout>
 
     <ImageButton
-        android:id="@+id/imageButton2"
+        android:id="@+id/imageButton_currentLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/imageButton1"
+        android:layout_alignBottom="@+id/imageButton_changeAddress"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:src="@android:drawable/ic_menu_mylocation" />
 
     <ImageButton
-        android:id="@+id/imageButton1"
+        android:id="@+id/imageButton_changeAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/editText1"
         android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@+id/imageButton2"
+        android:layout_toLeftOf="@+id/imageButton_currentLocation"
         android:src="@drawable/ic_menu_goto" />
 
 </RelativeLayout>

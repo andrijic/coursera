@@ -7,4 +7,5 @@
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
 	<string name="UNKOWN_ADDRESS">Unknown address</string>
+	<string name="LOOKING_LOCATION">Looking for location ...</string>
 </resources>
