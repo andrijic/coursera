@@ -40,7 +40,7 @@
         android:layout_alignBottom="@+id/imageButton1"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:src="@drawable/ic_plusone_medium_off_client" />
+        android:src="@android:drawable/ic_menu_mylocation" />
 
     <ImageButton
         android:id="@+id/imageButton1"
@@ -49,6 +49,6 @@
         android:layout_alignBottom="@+id/editText1"
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/imageButton2"
-        android:src="@android:drawable/btn_star" />
+        android:src="@drawable/ic_menu_goto" />
 
 </RelativeLayout>
