@@ -5,16 +5,18 @@
 
     <AutoCompleteTextView
         android:id="@+id/editText1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_alignBottom="@+id/imageButton_currentLocation"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/imageButton_changeAddress"
+        android:ellipsize="end"
         android:ems="10"
         android:height="20dp"
-        android:lines="2"
-        android:maxLines="2" >
+        android:lines="1"
+        android:maxLines="1"
+        android:scrollHorizontally="true" >
 
         <requestFocus />
     </AutoCompleteTextView>
@@ -29,17 +31,6 @@
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/editText1" /
     -->
-
-    <LinearLayout
-        android:id="@+id/mapPlaceholder"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/editText1"
-        android:orientation="vertical" >
-    </LinearLayout>
 
     <ImageButton
         android:id="@+id/imageButton_currentLocation"
@@ -57,5 +48,37 @@
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/imageButton_currentLocation"
         android:src="@drawable/ic_menu_goto" />
+
+    <EditText
+        android:id="@+id/editText2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/imageButton_changeAddress"
+        android:layout_below="@id/editText1"
+        android:ems="10" />
+
+    <LinearLayout
+        android:id="@+id/mapPlaceholder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/editText2"
+        android:orientation="vertical" >
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/imageButton_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/editText2"
+        android:layout_alignLeft="@+id/imageButton_currentLocation"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/editText2"
+        android:layout_below="@+id/imageButton_currentLocation"
+        android:src="@drawable/ic_search_category_default" />
 
 </RelativeLayout>

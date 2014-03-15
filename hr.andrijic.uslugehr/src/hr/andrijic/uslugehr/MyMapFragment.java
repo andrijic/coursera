@@ -1,8 +1,17 @@
 package hr.andrijic.uslugehr;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
@@ -14,6 +23,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -29,6 +39,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -46,11 +57,12 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	private IFragmentCallback fragmentCallback = null;	
 	private LocationManager locationManager;
 	private GoogleMap map;
-	private String MOJTAG = "MOJTAG";
+	
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
 	private Marker currentPositionMarker;
 		
 	private Location lastGoodLocation = null;
+	private Location lastGoodMyLocation = null;
 	
 	public MyMapFragment() {
 		// TODO Auto-generated constructor stub
@@ -63,9 +75,11 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	public void setLocation(Location location){
 		
 		//SupportMapFragment fragment = (SupportMapFragment)getFragmentManager().findFragmentById(R.id.fragment1);
-		Log.i(MOJTAG,"setLocation : "+location.getLongitude()+", "+location.getLatitude());
+		
 		
 		if(location != null && map != null){
+			Log.i(MainActivity.MOJTAG,"setLocation : "+location.getLongitude()+", "+location.getLatitude());
+			
 			CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
 					new CameraPosition(
 							new LatLng(location.getLatitude(), location.getLongitude()),
@@ -76,40 +90,48 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			);
 			map.animateCamera(cameraUpdate);	
 			
+			
 			if(currentPositionMarker == null){
 				BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_maps_indicator_current_position);
-				MarkerOptions options = new MarkerOptions()
-												.position(new LatLng(location.getLatitude(), location.getLongitude()))
-												.title("Hello world");
+				MarkerOptions options = new MarkerOptions().title("Hello world");
 				options.icon(descriptor);
+				options.position(new LatLng(location.getLatitude(), location.getLongitude()));
 				
 				currentPositionMarker = map.addMarker(options);
 			}
+			
+			currentPositionMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+			
+			((TextView)getView().findViewById(R.id.editText1)).setEnabled(false);
 		}
 	}
 	
 	@Override
 	public void onPause() {	
 		super.onPause();
-		Log.i(MOJTAG,"onPause");
+		Log.i(MainActivity.MOJTAG,"onPause");
 		
 		locationManager.removeUpdates(this);
+	}
+	
+	public void startTrackingCurrentLocation(){
+		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
+		
+		locationManager.requestLocationUpdates(bestProvider, 300, 0, this);
 	}
 	
 	@Override
 	public void onResume() {		
 		super.onResume();
-		Log.i(MOJTAG,"onResume"); 
+		Log.i(MainActivity.MOJTAG,"onResume"); 
+		startTrackingCurrentLocation();
 		
-		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
-				
-		locationManager.requestLocationUpdates(bestProvider, 1000, 0, this);
 	}
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
-		Log.i(MOJTAG,"onCreate");
+		Log.i(MainActivity.MOJTAG,"onCreate");
 		
 		setRetainInstance(true);
 		
@@ -148,7 +170,22 @@ public class MyMapFragment extends Fragment implements LocationListener{
 							marker.hideInfoWindow();
 							fragmentCallback.markerInfoClicked(marker);
 						}
-					});					
+					});		
+					
+					map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+						
+						@Override
+						public void onMapLongClick(LatLng point) {
+							Log.i(MainActivity.MOJTAG, "Long press on map, changing location");
+							Location location = new Location("");
+							location.setLatitude(point.latitude);
+							location.setLongitude(point.longitude);
+							
+							lastGoodLocation = location;
+							setLocation(lastGoodLocation);
+							updateLocationTextForLastGoogLocation();							
+						}
+					});
 				}
 			};				
 			
@@ -170,7 +207,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		Log.i(MOJTAG,"onCreateView");
+		Log.i(MainActivity.MOJTAG,"onCreateView");
 		
 		View rootView = inflater.inflate(R.layout.map, container, false);
 		
@@ -203,8 +240,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			}
 		});
 		
-		ImageButton imageButton = (ImageButton)rootView.findViewById(R.id.imageButton_changeAddress);
-		imageButton.setOnClickListener(new View.OnClickListener() {
+		ImageButton changeAddressButton = (ImageButton)rootView.findViewById(R.id.imageButton_changeAddress);
+		changeAddressButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {				
@@ -213,8 +250,33 @@ public class MyMapFragment extends Fragment implements LocationListener{
 				
 				InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 				inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+				
+				
 			}
 		});		
+		
+		ImageButton currentLocationButton = (ImageButton)rootView.findViewById(R.id.imageButton_currentLocation);
+		currentLocationButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				setLocation(lastGoodMyLocation); //imediate return to the last meassured calculation
+				startTrackingCurrentLocation();	//get better reading with better accurracy - fine tunning
+				
+				
+			}
+		});
+		
+		ImageButton searchButton = (ImageButton)rootView.findViewById(R.id.imageButton_search);
+		searchButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				String url = getActivity().getString(R.string.uslugehrurl);
+				new SearchServicesAsyncTask().execute(url);
+				
+			}
+		});
 		
 		return rootView;
 	}
@@ -223,14 +285,16 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	public void onLocationChanged(Location location) {
 		Log.i("MOJTAG","onLocationChanged");
 		
-		if(location != null && location.getAccuracy()<2000){
-			lastGoodLocation = location;
-			setLocation(lastGoodLocation);
-			Log.i("MOJTAG","lastGoodLocation set");
-			
-			updateLocationTextForLastGoogLocation();
-			
+		lastGoodLocation = location;
+		setLocation(lastGoodLocation);
+		Log.i("MOJTAG","lastGoodLocation set");
+		
+		updateLocationTextForLastGoogLocation();
+		
+		if(location != null && location.getAccuracy()<2000){			
+			Log.i("MOJTAG","removeUpdates");
 			locationManager.removeUpdates(this);
+			lastGoodMyLocation = lastGoodLocation;
 		}
 	}
 	
@@ -241,14 +305,22 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		try {
 			addresses = geocoder.getFromLocation(lastGoodLocation.getLatitude(), lastGoodLocation.getLongitude(), 1);
 			
+			AutoCompleteTextView locationText = ((AutoCompleteTextView)getView().findViewById(R.id.editText1));
+			
+			
+			
 			if(addresses != null && addresses.size() > 0){
 				Address pom = addresses.get(0);
 									
-				((AutoCompleteTextView)getView().findViewById(R.id.editText1)).setText(pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
+				String shortened = (pom.getAddressLine(0)+" "+pom.getAddressLine(1)+" "+pom.getAddressLine(2));
+				locationText.setText(shortened);
 			}else{
-				((AutoCompleteTextView)getView().findViewById(R.id.editText1)).setText(R.string.UNKOWN_ADDRESS+" Lat: "+lastGoodLocation.getLatitude()+
+				locationText.setText(R.string.UNKOWN_ADDRESS+" Lat: "+lastGoodLocation.getLatitude()+
 						" Long: "+lastGoodLocation.getLongitude());
 			}
+			
+			locationText.dismissDropDown();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -273,5 +345,55 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		Log.i("MOJTAG","onStatusChanged");
 	}
 
+	public static class SearchServicesAsyncTask extends AsyncTask<String, Void, ArrayList<UslugaEntity>>{
+
+		@Override
+		protected ArrayList<UslugaEntity> doInBackground(String... params) {
+			HttpURLConnection connection = null;
+			ArrayList<UslugaEntity> list = new ArrayList<UslugaEntity>();
+			
+			try{
+				URL url = new URL(params[0]);
+				
+				connection = (HttpURLConnection)url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setReadTimeout(10000);
+				connection.connect();
+				InputStream stream = connection.getInputStream();
+				ByteArrayOutputStream bstream = new ByteArrayOutputStream();
+				
+				byte[] buffer = new byte[1024];
+				while(stream.read(buffer) != -1){
+					bstream.write(buffer);
+				}
+				
+				String jsonResult = new String(bstream.toByteArray());
+				
+				
+				JSONObject array = new JSONObject(jsonResult);
+				Iterator<String> keys = array.keys();
+				while(keys.hasNext()){					
+					UslugaEntity usluga = new UslugaEntity(array.getJSONObject(keys.next()));
+					list.add(usluga);
+				}				
+				
+			}catch(Exception e){
+				e.printStackTrace();
+			}finally{
+				if(connection != null){
+					connection.disconnect();
+				}
+			}
+			
+			return list;
+		}
+	
+		@Override
+		protected void onPostExecute(ArrayList<UslugaEntity> result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+		}
+	
+	}
 
 }

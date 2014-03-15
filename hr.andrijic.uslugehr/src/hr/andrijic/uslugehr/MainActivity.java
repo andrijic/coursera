@@ -62,6 +62,7 @@ public class MainActivity extends FragmentActivity implements
 	 * intensive, it may be best to switch to a
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
+	public static String MOJTAG = "MOJTAG";
 	SectionsPagerAdapter mSectionsPagerAdapter;
 	
 	int TABPOSITION_MAP = 0;
