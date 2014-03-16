@@ -50,7 +50,7 @@
         android:src="@drawable/ic_menu_goto" />
 
     <EditText
-        android:id="@+id/editText2"
+        android:id="@+id/searchString"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -65,7 +65,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/editText2"
+        android:layout_below="@+id/searchString"
         android:orientation="vertical" >
 
     </LinearLayout>
@@ -74,10 +74,10 @@
         android:id="@+id/imageButton_search"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/editText2"
+        android:layout_alignBottom="@+id/searchString"
         android:layout_alignLeft="@+id/imageButton_currentLocation"
         android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/editText2"
+        android:layout_alignTop="@+id/searchString"
         android:layout_below="@+id/imageButton_currentLocation"
         android:src="@drawable/ic_search_category_default" />
 

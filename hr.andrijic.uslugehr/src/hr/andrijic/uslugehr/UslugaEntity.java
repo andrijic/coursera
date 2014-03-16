@@ -31,6 +31,7 @@ public class UslugaEntity {
 		
 		try{
 			nid = object.getString("nid");
+			title = object.getString("title");
 			status = object.getString("status");
 			comment = object.getString("comment");
 			sticky = object.getString("sticky");
@@ -46,6 +47,7 @@ public class UslugaEntity {
 			price = object.getString("price");
 			customer_service = object.getString("customer_service");
 			quality = object.getString("quality");
+			email = object.getString("email");
 			
 			double latitude = object.getDouble("location_lat");
 			double longitude = object.getDouble("location_lon");

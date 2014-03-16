@@ -13,6 +13,10 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.input.InputManager;
@@ -41,6 +45,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -61,6 +66,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
 	private ArrayList<UslugaEntity> uslugeResult;
 	private Marker currentPositionMarker;
+	
+	private Integer SEARCHLIMIT = 100;
+	private Integer SEARCHRADIUS = 50;
 		
 	private Location lastGoodLocation = null;
 	private Location lastGoodMyLocation = null;
@@ -84,7 +92,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(
 					new CameraPosition(
 							new LatLng(location.getLatitude(), location.getLongitude()),
-							12,
+							9,
 							0,
 							0
 					)
@@ -99,7 +107,10 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	}
 	
 	private void setCurrentPositionMarker(Location location){
-		if(currentPositionMarker == null && location!= null){
+		if(location == null)
+			return;
+		
+		if(currentPositionMarker == null){
 			BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_maps_indicator_current_position);
 			MarkerOptions options = new MarkerOptions();
 			options.icon(descriptor);
@@ -275,19 +286,30 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			
 			@Override
 			public void onClick(View v) {
-				String url = getActivity().getString(R.string.uslugehrurl);
-				new SearchServicesAsyncTask(){
-					protected void onPostExecute(java.util.ArrayList<UslugaEntity> result) {
-						uslugeResult = result;
-						redrawMarkers();
-						
-					};
-				}.execute(url);
+				InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+				inputManager.toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS, 0);
+				
+				performSearchServices();
 				
 			}
 		});
 		
 		return rootView;
+	}
+	
+	public void performSearchServices(){
+		String baseUrl = getActivity().getString(R.string.uslugehrurl);
+		String searchString = ((TextView)getActivity().findViewById(R.id.searchString)).getText().toString();
+		UslugeQuery query = new UslugeQuery(baseUrl, searchString, lastGoodLocation, SEARCHRADIUS, SEARCHLIMIT);
+		
+		new SearchServicesAsyncTask(getActivity()){
+			protected void onPostExecute(java.util.ArrayList<UslugaEntity> result) {
+				cleanResources();
+				uslugeResult = result;
+				redrawMarkers();
+				
+			};
+		}.execute(query.getQueryString());
 	}
 	
 	@Override
@@ -304,6 +326,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			Log.i("MOJTAG","removeUpdates");
 			locationManager.removeUpdates(this);
 			lastGoodMyLocation = lastGoodLocation;
+			performSearchServices();
 		}
 	}
 	
@@ -359,7 +382,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		currentPositionMarker = null;		
 		setCurrentPositionMarker(lastGoodLocation);
 		
-		if(uslugeResult != null){
+		if(uslugeResult != null && uslugeResult.size()>0){
 			for(UslugaEntity pom: uslugeResult){
 				if(pom.getLocation() != null){
 					Location location = pom.getLocation();
@@ -368,11 +391,29 @@ public class MyMapFragment extends Fragment implements LocationListener{
 					markers.add(map.addMarker(options));
 				}
 			}
+		}else{
+			AlertDialog.Builder dialog = new AlertDialog.Builder(getActivity());
+			dialog.setMessage(getActivity().getString(R.string.NO_RESULTS_FOUND)).
+								setPositiveButton(getActivity().getString(R.string.OK), null);
+			dialog.show();
 		}
 	}
 
-	public static class SearchServicesAsyncTask extends AsyncTask<String, Void, ArrayList<UslugaEntity>>{
+	public static class SearchServicesAsyncTask extends AsyncTask<String, String, ArrayList<UslugaEntity>>{
 
+		private Activity mContext;
+		private ProgressDialog mDialog;
+		
+		public SearchServicesAsyncTask(Activity mContext) {
+			this.mContext = mContext;
+		}
+		
+		public void cleanResources(){
+			mDialog.hide();
+			mDialog = null;
+			mContext = null;
+		}
+		
 		@Override
 		protected ArrayList<UslugaEntity> doInBackground(String... params) {
 			HttpURLConnection connection = null;
@@ -380,6 +421,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			
 			try{
 				URL url = new URL(params[0]);
+								
+				
 				
 				connection = (HttpURLConnection)url.openConnection();
 				connection.setRequestMethod("GET");
@@ -389,14 +432,15 @@ public class MyMapFragment extends Fragment implements LocationListener{
 				ByteArrayOutputStream bstream = new ByteArrayOutputStream();
 				
 				byte[] buffer = new byte[1024];
-				while(stream.read(buffer) != -1){
-					bstream.write(buffer);
+				int len; 
+				while((len = stream.read(buffer)) != -1){
+					bstream.write(buffer, 0, len);
 				}
 				
 				String jsonResult = new String(bstream.toByteArray());
 				
-				
 				JSONObject array = new JSONObject(jsonResult);
+				
 				Iterator<String> keys = array.keys();
 				while(keys.hasNext()){					
 					UslugaEntity usluga = new UslugaEntity(array.getJSONObject(keys.next()));
@@ -404,7 +448,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 				}				
 				
 			}catch(Exception e){
-				e.printStackTrace();
+				e.printStackTrace();				
 			}finally{
 				if(connection != null){
 					connection.disconnect();
@@ -414,7 +458,16 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			return list;
 		}
 		
-	
-
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			
+			if(mDialog == null){
+				mDialog = ProgressDialog.show(mContext, "", mContext.getString(R.string.CONTACTING_SERVER_PLEASE_WAIT),
+						false, false, null);
+			}			
+			
+		}
+		
 	}
 }
