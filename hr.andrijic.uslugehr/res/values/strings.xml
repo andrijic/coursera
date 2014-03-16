@@ -11,4 +11,6 @@
 	<string name="CONTACTING_SERVER_PLEASE_WAIT">Contacting server, please wait.</string>
 	<string name="NO_RESULTS_FOUND">No results found.</string>
 	<string name="OK">OK</string>
+	<string name="FILTER_SEARCH">Filter Search</string>
+	<string name="LOOKING_FOR_CURRENT_LOCATION">Looking for current location.</string>
 </resources>

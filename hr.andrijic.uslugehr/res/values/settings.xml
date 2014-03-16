@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="MAXRESULTSAUTOCOMPLETE">5</integer>
-    <string name="uslugehrurl">http://192.168.0.6/uslugehr/?q=search_categories_android</string>
+    <!-- string name="uslugehrurl">http://192.168.0.6/uslugehr/?q=search_categories_android</string-->
+    <string name="uslugehrurl">http://www.usluge.hr/uslugehr/?q=search_categories_android</string>
 </resources>

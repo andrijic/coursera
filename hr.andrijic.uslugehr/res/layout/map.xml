@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignRight="@+id/imageButton_changeAddress"
+        android:layout_alignRight="@+id/editText1"
         android:layout_below="@id/editText1"
         android:ems="10" />
 
@@ -70,15 +70,16 @@
 
     </LinearLayout>
 
-    <ImageButton
+    <Button
         android:id="@+id/imageButton_search"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/searchString"
-        android:layout_alignLeft="@+id/imageButton_currentLocation"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/searchString"
         android:layout_below="@+id/imageButton_currentLocation"
-        android:src="@drawable/ic_search_category_default" />
+        android:layout_toRightOf="@+id/editText1"
+        android:src="@drawable/ic_search_category_default"
+        android:text="@string/FILTER_SEARCH" />
 
 </RelativeLayout>

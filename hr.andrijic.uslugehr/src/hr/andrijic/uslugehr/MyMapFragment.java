@@ -42,6 +42,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -58,13 +59,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MyMapFragment extends Fragment implements LocationListener{
+public class MyMapFragment extends Fragment implements LocationListener, IUslugeUpdateListener{
 	private IFragmentCallback fragmentCallback = null;	
 	private LocationManager locationManager;
 	private GoogleMap map;
 	
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
-	private ArrayList<UslugaEntity> uslugeResult;
+	
 	private Marker currentPositionMarker;
 	
 	private Integer SEARCHLIMIT = 100;
@@ -72,6 +73,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		
 	private Location lastGoodLocation = null;
 	private Location lastGoodMyLocation = null;
+	private ProgressDialog mProgressCurrentLocation;
+	private boolean initialized = false;
 	
 	public MyMapFragment() {
 		// TODO Auto-generated constructor stub
@@ -132,7 +135,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	
 	public void startTrackingCurrentLocation(){
 		String bestProvider = locationManager.getBestProvider(new Criteria(), true);
-		
+		mProgressCurrentLocation = ProgressDialog.show(getActivity(), "", getActivity().getApplicationContext().getString(R.string.LOOKING_FOR_CURRENT_LOCATION),
+				false, false, null);
 		locationManager.requestLocationUpdates(bestProvider, 300, 0, this);
 	}
 	
@@ -140,7 +144,10 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	public void onResume() {		
 		super.onResume();
 		Log.i(MainActivity.MOJTAG,"onResume"); 
-		startTrackingCurrentLocation();
+		if(!initialized){
+			startTrackingCurrentLocation();
+			initialized = true;
+		}
 		
 	}
 	
@@ -197,7 +204,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 							
 							lastGoodLocation = location;
 							setLocation(lastGoodLocation);
-							updateLocationTextForLastGoogLocation();							
+							updateLocationTextForLastGoogLocation();	
+							performSearchServices();
 						}
 					});
 				}
@@ -248,8 +256,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 				Location location = new Location("reversegeocoded");
 				location.setLatitude(address.getLatitude());
 				location.setLongitude(address.getLongitude());
+				lastGoodLocation = location;
 				setLocation(location);	
-								
+				performSearchServices();								
 				locationText.setEnabled(false);
 			}
 		});
@@ -274,14 +283,15 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			
 			@Override
 			public void onClick(View v) {
+				
 				setLocation(lastGoodMyLocation); //imediate return to the last meassured calculation
 				startTrackingCurrentLocation();	//get better reading with better accurracy - fine tunning
 				
-				
+				 
 			}
 		});
 		
-		ImageButton searchButton = (ImageButton)rootView.findViewById(R.id.imageButton_search);
+		Button searchButton = (Button)rootView.findViewById(R.id.imageButton_search);
 		searchButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
@@ -305,8 +315,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		new SearchServicesAsyncTask(getActivity()){
 			protected void onPostExecute(java.util.ArrayList<UslugaEntity> result) {
 				cleanResources();
-				uslugeResult = result;
-				redrawMarkers();
+				//uslugeResult = result;
+				fragmentCallback.updateUslugeResults(result);
+				
 				
 			};
 		}.execute(query.getQueryString());
@@ -315,6 +326,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	@Override
 	public void onLocationChanged(Location location) {
 		Log.i("MOJTAG","onLocationChanged");
+		
+		
 		
 		lastGoodLocation = location;
 		setLocation(lastGoodLocation);
@@ -326,6 +339,9 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			Log.i("MOJTAG","removeUpdates");
 			locationManager.removeUpdates(this);
 			lastGoodMyLocation = lastGoodLocation;
+			if(mProgressCurrentLocation != null){
+				mProgressCurrentLocation.cancel();
+			}
 			performSearchServices();
 		}
 	}
@@ -377,7 +393,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		Log.i("MOJTAG","onStatusChanged");
 	}
 	
-	private void redrawMarkers(){
+	private void redrawMarkers(ArrayList<UslugaEntity> uslugeResult){
 		map.clear();
 		currentPositionMarker = null;		
 		setCurrentPositionMarker(lastGoodLocation);
@@ -469,5 +485,11 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			
 		}
 		
+	}
+
+	@Override
+	public void notifyUpdateUslugeResults(ArrayList<UslugaEntity> results) {
+		
+		redrawMarkers(results);
 	}
 }

@@ -2,6 +2,7 @@ package hr.andrijic.uslugehr;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,13 +66,16 @@ public class MainActivity extends FragmentActivity implements
 	public static String MOJTAG = "MOJTAG";
 	SectionsPagerAdapter mSectionsPagerAdapter;
 	
+	private ArrayList<UslugaEntity> uslugeResult;
+	private HashMap<Integer,IUslugeUpdateListener> uslugeUpdateListeners = new HashMap<Integer,IUslugeUpdateListener>();
+	
 	int TABPOSITION_MAP = 0;
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	private ViewPager mViewPager;
-	private static MyMapFragment myMapFragment;
+	//private static MyMapFragment myMapFragment;
 		
 	
 	@Override
@@ -183,16 +187,27 @@ public class MainActivity extends FragmentActivity implements
 			
 			
 			if(position == TABPOSITION_MAP){
-				myMapFragment = new MyMapFragment();
-				myMapFragment.setFragmentListener(fragmentCallback);
-				return myMapFragment;
-			}else{
-				Fragment fragment = new DummySectionFragment();
-				Bundle args = new Bundle();
-				args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-				fragment.setArguments(args);
+				IUslugeUpdateListener listener = uslugeUpdateListeners.get(TABPOSITION_MAP);
+				if(listener == null){
+					MyMapFragment myMapFragment = new MyMapFragment();
+					myMapFragment.setFragmentListener(fragmentCallback);
+					uslugeUpdateListeners.put(TABPOSITION_MAP, myMapFragment);
+					listener = myMapFragment;
+				}
 				
-				return fragment;
+				return (Fragment) listener;
+			}else{
+				IUslugeUpdateListener listener = uslugeUpdateListeners.get(position);
+				if(listener == null){
+					DummySectionFragment fragment = new DummySectionFragment();
+					Bundle args = new Bundle();
+					args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
+					fragment.setArguments(args);
+					uslugeUpdateListeners.put(position, fragment);
+					listener = fragment;
+				}
+				
+				return (Fragment) listener;
 			}
 		}
 
@@ -221,7 +236,7 @@ public class MainActivity extends FragmentActivity implements
 	 * A dummy fragment representing a section of the app, but that simply
 	 * displays dummy text.
 	 */
-	public static class DummySectionFragment extends Fragment {
+	public static class DummySectionFragment extends Fragment implements IUslugeUpdateListener {
 		/**
 		 * The fragment argument representing the section number for this
 		 * fragment.
@@ -242,6 +257,24 @@ public class MainActivity extends FragmentActivity implements
 					ARG_SECTION_NUMBER)));
 			return rootView;
 		}
+		
+		@Override
+		public void onAttach(Activity activity) {
+			// TODO Auto-generated method stub
+			super.onAttach(activity);
+		}
+		@Override
+		public void onResume() {
+			// TODO Auto-generated method stub
+			super.onResume();
+		}
+
+		@Override
+		public void notifyUpdateUslugeResults(ArrayList<UslugaEntity> results) {
+			// TODO Auto-generated method stub
+			
+		}
+
 	}
 
 	
@@ -251,6 +284,19 @@ public class MainActivity extends FragmentActivity implements
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG",marker.getTitle());
 			
+	}
+
+
+
+
+	@Override
+	public void updateUslugeResults(ArrayList<UslugaEntity> results) {
+		// TODO Auto-generated method stub
+		this.uslugeResult = results;
+		
+		for(IUslugeUpdateListener pom: uslugeUpdateListeners.values()){
+			pom.notifyUpdateUslugeResults(results);
+		}
 	}
 
 
