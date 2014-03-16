@@ -59,6 +59,7 @@ public class MyMapFragment extends Fragment implements LocationListener{
 	private GoogleMap map;
 	
 	private ArrayList<Marker> markers = new ArrayList<Marker>();
+	private ArrayList<UslugaEntity> uslugeResult;
 	private Marker currentPositionMarker;
 		
 	private Location lastGoodLocation = null;
@@ -90,20 +91,24 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			);
 			map.animateCamera(cameraUpdate);	
 			
+			setCurrentPositionMarker(location);
 			
-			if(currentPositionMarker == null){
-				BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_maps_indicator_current_position);
-				MarkerOptions options = new MarkerOptions().title("Hello world");
-				options.icon(descriptor);
-				options.position(new LatLng(location.getLatitude(), location.getLongitude()));
-				
-				currentPositionMarker = map.addMarker(options);
-			}
-			
-			currentPositionMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
 			
 			((TextView)getView().findViewById(R.id.editText1)).setEnabled(false);
 		}
+	}
+	
+	private void setCurrentPositionMarker(Location location){
+		if(currentPositionMarker == null && location!= null){
+			BitmapDescriptor descriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_maps_indicator_current_position);
+			MarkerOptions options = new MarkerOptions();
+			options.icon(descriptor);
+			options.position(new LatLng(location.getLatitude(), location.getLongitude()));
+			
+			currentPositionMarker = map.addMarker(options);
+		}
+		
+		currentPositionMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
 	}
 	
 	@Override
@@ -159,8 +164,6 @@ public class MyMapFragment extends Fragment implements LocationListener{
 						map.moveCamera(cameraUpdate);
 					}
 					
-					Marker marker = map.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Hello world"));
-					markers.add(marker);
 					
 					map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
 						
@@ -273,7 +276,13 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			@Override
 			public void onClick(View v) {
 				String url = getActivity().getString(R.string.uslugehrurl);
-				new SearchServicesAsyncTask().execute(url);
+				new SearchServicesAsyncTask(){
+					protected void onPostExecute(java.util.ArrayList<UslugaEntity> result) {
+						uslugeResult = result;
+						redrawMarkers();
+						
+					};
+				}.execute(url);
 				
 			}
 		});
@@ -344,6 +353,23 @@ public class MyMapFragment extends Fragment implements LocationListener{
 		// TODO Auto-generated method stub
 		Log.i("MOJTAG","onStatusChanged");
 	}
+	
+	private void redrawMarkers(){
+		map.clear();
+		currentPositionMarker = null;		
+		setCurrentPositionMarker(lastGoodLocation);
+		
+		if(uslugeResult != null){
+			for(UslugaEntity pom: uslugeResult){
+				if(pom.getLocation() != null){
+					Location location = pom.getLocation();
+					MarkerOptions options = new MarkerOptions().title(pom.getTitle());
+					options.position(new LatLng(location.getLatitude(),location.getLongitude()));
+					markers.add(map.addMarker(options));
+				}
+			}
+		}
+	}
 
 	public static class SearchServicesAsyncTask extends AsyncTask<String, Void, ArrayList<UslugaEntity>>{
 
@@ -387,13 +413,8 @@ public class MyMapFragment extends Fragment implements LocationListener{
 			
 			return list;
 		}
+		
 	
-		@Override
-		protected void onPostExecute(ArrayList<UslugaEntity> result) {
-			// TODO Auto-generated method stub
-			super.onPostExecute(result);
-		}
-	
-	}
 
+	}
 }
