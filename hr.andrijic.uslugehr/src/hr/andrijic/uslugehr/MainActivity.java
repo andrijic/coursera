@@ -70,6 +70,7 @@ public class MainActivity extends FragmentActivity implements
 	private HashMap<Integer,IUslugeUpdateListener> uslugeUpdateListeners = new HashMap<Integer,IUslugeUpdateListener>();
 	
 	int TABPOSITION_MAP = 0;
+	int TABPOSITION_LIST = 1;
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
@@ -187,11 +188,21 @@ public class MainActivity extends FragmentActivity implements
 			
 			
 			if(position == TABPOSITION_MAP){
-				IUslugeUpdateListener listener = uslugeUpdateListeners.get(TABPOSITION_MAP);
+				IUslugeUpdateListener listener = uslugeUpdateListeners.get(position);
 				if(listener == null){
 					MyMapFragment myMapFragment = new MyMapFragment();
 					myMapFragment.setFragmentListener(fragmentCallback);
-					uslugeUpdateListeners.put(TABPOSITION_MAP, myMapFragment);
+					uslugeUpdateListeners.put(position, myMapFragment);
+					listener = myMapFragment;
+				}
+				
+				return (Fragment) listener;
+			}else if(position == TABPOSITION_LIST){
+				IUslugeUpdateListener listener = uslugeUpdateListeners.get(position);
+				if(listener == null){
+					UslugeResultListFragment myMapFragment = new UslugeResultListFragment();
+					myMapFragment.setFragmentListener(fragmentCallback);
+					uslugeUpdateListeners.put(position, myMapFragment);
 					listener = myMapFragment;
 				}
 				
